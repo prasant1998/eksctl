@@ -1,0 +1,163 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: test-eks-dev
+  region: us-east-1
+  version: "1.21"
+
+#availabilityZones: []
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["all"]
+    logRetentionInDays: 30
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+  - metadata:
+      name: aws-load-balancer-controller
+      namespace: kube-system
+    wellKnownPolicies:
+      awsLoadBalancerController: true
+  - metadata:
+      name: cert-manager
+      namespace: cert-manager
+    wellKnownPolicies:
+      certManager: true
+  - metadata:
+      name: cluster-autoscaler
+      namespace: kube-system
+    wellKnownPolicies:
+      autoScaler: true
+  - metadata:
+      name: external-dns
+      namespace: external-dns
+    wellKnownPolicies:
+      externalDNS: true
+  - metadata:
+      name: ebs-csi-controller-sa
+      namespace: kube-system
+    wellKnownPolicies:
+      ebsCSIController: true
+  - metadata:
+      name: efs-csi-controller-sa
+      namespace: kube-system
+    wellKnownPolicies:
+      efsCSIController: true
+
+kubernetesNetworkConfig:
+  ipFamily: IPv4
+
+managedNodeGroups:
+  - name: test-eks-dev-mng-pub01
+    disableIMDSv1: true
+    instanceType: m5.xlarge
+    instancePrefix: test-eks-dev-mng-pub01-
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    updateConfig:
+      maxUnavailablePercentage: 10
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        albIngress: true
+        awsLoadBalancerController: true
+        cloudWatch: true
+        ebs: true
+        efs: true
+    labels:
+      alpha.eksctl.io/cluster-name: test-eks-dev
+      alpha.eksctl.io/nodegroup-name: test-eks-dev-mng-pub01
+    privateNetworking: true
+    #securityGroups:
+    #  attachIDs: []
+    ssh:
+      allow: false
+    tags:
+      alpha.eksctl.io/nodegroup-name: test-eks-dev-mng-pub01
+      alpha.eksctl.io/nodegroup-type: managed
+    volumeSize: 100
+  - name: test-eks-dev-mng-pvt01
+    disableIMDSv1: true
+    instanceType: m5.xlarge
+    instancePrefix: test-eks-dev-mng-pvt01-
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    updateConfig:
+      maxUnavailablePercentage: 10
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        albIngress: true
+        awsLoadBalancerController: true
+        cloudWatch: true
+        ebs: true
+        efs: true
+    labels:
+      alpha.eksctl.io/cluster-name: test-eks-dev
+      alpha.eksctl.io/nodegroup-name: test-eks-dev-mng-pvt01
+    privateNetworking: true
+    #securityGroups:
+    #  attachIDs: []
+    ssh:
+      allow: false
+    tags:
+      alpha.eksctl.io/nodegroup-name: test-eks-dev-mng-pvt01
+      alpha.eksctl.io/nodegroup-type: managed
+    volumeSize: 100
+  - name: test-eks-dev-mng-db01
+    disableIMDSv1: true
+    instanceType: m5.xlarge
+    instancePrefix: test-eks-dev-mng-db01-
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    updateConfig:
+      maxUnavailablePercentage: 10
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        albIngress: true
+        awsLoadBalancerController: true
+        cloudWatch: true
+        ebs: true
+        efs: true
+    labels:
+      alpha.eksctl.io/cluster-name: test-eks-dev
+      alpha.eksctl.io/nodegroup-name: test-eks-dev-mng-db01
+    privateNetworking: true
+    #securityGroups:
+    #  attachIDs: []
+    ssh:
+      allow: false
+    tags:
+      alpha.eksctl.io/nodegroup-name: test-eks-dev-mng-db01
+      alpha.eksctl.io/nodegroup-type: managed
+    volumeSize: 100
+
+addons:
+- name: aws-ebs-csi-driver
+  version: latest # auto discovers the latest available
+
+privateCluster:
+  enabled: false
+  skipEndpointCreation: false
+
+secretsEncryption:
+  # KMS key used for envelope encryption of Kubernetes secrets
+  # alias eks_secrets
+  keyARN: arn:aws:kms:us-east-1:389132740677:key/b3551d46-1462-498e-bf88-f7a35da9d301
+
+vpc:
+  cidr: 10.100.0.0/20
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs: ["3.19.20.124/32"]
+  autoAllocateIPv6: false
+  nat:
+    gateway: HighlyAvailable
